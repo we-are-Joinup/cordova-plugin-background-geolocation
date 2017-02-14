@@ -714,6 +714,7 @@ public class BackgroundLocation implements Parcelable {
         if (hasAltitude) json.put("altitude", altitude);
         if (hasBearing) json.put("bearing", bearing);
         if (hasRadius) json.put("radius", radius);
+        json.put("isFromMockProvider", isFromMockProvider);
         json.put("locationProvider", locationProvider);
 
         return json;
