@@ -114,7 +114,7 @@ public class BackgroundGeolocationPlugin extends CordovaPlugin {
             switch (msg.what) {
                 case LocationService.MSG_LOCATION_UPDATE:
                     try {
-                        Log.d(TAG, 'LOCATION RECEIVED');
+                        Log.d(TAG, "LOCATION RECEIVED");
                         log.debug("Sending location to webview");
                         Bundle bundle = msg.getData();
                         bundle.setClassLoader(LocationService.class.getClassLoader());
