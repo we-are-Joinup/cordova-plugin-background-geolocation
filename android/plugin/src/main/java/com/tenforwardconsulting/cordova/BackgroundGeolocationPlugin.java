@@ -61,7 +61,11 @@ import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import android.util.Log;
+
 public class BackgroundGeolocationPlugin extends CordovaPlugin {
+    
+    private static final String TAG = "JOUINUP";
 
     public static final String ACTION_START = "start";
     public static final String ACTION_STOP = "stop";
@@ -110,6 +114,7 @@ public class BackgroundGeolocationPlugin extends CordovaPlugin {
             switch (msg.what) {
                 case LocationService.MSG_LOCATION_UPDATE:
                     try {
+                        Log.d(TAG, 'LOCATION RECEIVED');
                         log.debug("Sending location to webview");
                         Bundle bundle = msg.getData();
                         bundle.setClassLoader(LocationService.class.getClassLoader());
