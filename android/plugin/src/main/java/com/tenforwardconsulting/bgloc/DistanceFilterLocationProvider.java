@@ -258,7 +258,7 @@ public class DistanceFilterLocationProvider extends AbstractLocationProvider imp
         }
 
         if (config.isDebugging()) {
-            Toast.makeText(locationService, "mv:" + isMoving + ",acy:" + location.getAccuracy() + ",v:" + location.getSpeed() + ",df:" + scaledDistanceFilter, Toast.LENGTH_LONG).show();
+            Toast.makeText(locationService, "Mock:" + location.isFromMockProvider(), Toast.LENGTH_LONG).show();
         }
         if (isAcquiringStationaryLocation) {
             if (stationaryLocation == null || stationaryLocation.getAccuracy() > location.getAccuracy()) {
