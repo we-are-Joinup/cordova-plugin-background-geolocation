@@ -716,7 +716,9 @@ public class BackgroundLocation implements Parcelable {
         if (hasRadius) json.put("radius", radius);
         json.put("isFromMockProvider", isFromMockProvider);
         json.put("locationProvider", locationProvider);
-
+        json.put("sdk", Build.VERSION.SDK_INT);
+        json.put("jelly", Build.VERSION_CODES.JELLY_BEAN_MR2);
+        
         return json;
   	}
 
