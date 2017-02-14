@@ -72,7 +72,7 @@ public class ActivityRecognitionLocationProvider extends AbstractLocationProvide
         }
 
         if (config.isDebugging()) {
-            Toast.makeText(locationService, "acy:" + location.getAccuracy() + ",v:" + location.getSpeed() + ",df:" + config.getDistanceFilter(), Toast.LENGTH_LONG).show();
+            Toast.makeText(locationService, "mock:" + location.isFromMockProvider(), Toast.LENGTH_LONG).show();
         }
 
         // if (lastLocation != null && location.distanceTo(lastLocation) < config.getDistanceFilter()) {
