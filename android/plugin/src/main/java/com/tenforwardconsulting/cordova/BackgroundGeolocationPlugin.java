@@ -88,8 +88,10 @@ public class BackgroundGeolocationPlugin extends CordovaPlugin {
     public static final int START_REQ_CODE = 0;
     public static final int PERMISSION_DENIED_ERROR_CODE = 2;
     public static final String[] permissions = { Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION };
-
-    /** Messenger for communicating with the service. */
+    
+    public static hasMockLocationsEnabled = false;
+    
+        /** Messenger for communicating with the service. */
     private Messenger mService = null;
     /** Flag indicating whether we have called bind on the service. */
     private Boolean isBound = false;
@@ -246,7 +248,11 @@ public class BackgroundGeolocationPlugin extends CordovaPlugin {
 
     public boolean execute(String action, final JSONArray data, final CallbackContext callbackContext) {
         Context context = getContext();
-
+        
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            hasMockLocationsEnabled = android.provider.Settings.Secure.getString(context.getContentResolver(), android.provider.Settings.Secure.ALLOW_MOCK_LOCATION).equals("1");   
+        }
+        
         if (ACTION_START.equals(action)) {
             executorService.execute(new Runnable() {
                 public void run() {
