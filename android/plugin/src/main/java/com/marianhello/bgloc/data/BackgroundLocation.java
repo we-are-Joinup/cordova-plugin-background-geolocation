@@ -30,6 +30,7 @@ public class BackgroundLocation implements Parcelable {
     private boolean hasBearing = false;
     private boolean hasRadius = false;
     private boolean isFromMockProvider = false;
+    private boolean hasMockLocationsEnabled = false;
     private boolean isValid = true;
     private Bundle extras = null;
 
@@ -57,6 +58,9 @@ public class BackgroundLocation implements Parcelable {
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             isFromMockProvider = location.isFromMockProvider();
+        } 
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            hasMockLocationsEnabled = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ALLOW_MOCK_LOCATION).equals("1");   
         }
     }
 
@@ -106,7 +110,8 @@ public class BackgroundLocation implements Parcelable {
         hasSpeed = l.hasSpeed;
         hasBearing = l.hasBearing;
         hasRadius = l.hasRadius;
-        isFromMockProvider = l.isFromMockProvider;
+        
+        MockProvider = l.isFromMockProvider;
         isValid = l.isValid;
         extras = (l.extras == null) ? null : new Bundle(l.extras);
     }
@@ -715,6 +720,7 @@ public class BackgroundLocation implements Parcelable {
         if (hasBearing) json.put("bearing", bearing);
         if (hasRadius) json.put("radius", radius);
         json.put("isFromMockProvider", isFromMockProvider);
+        json.put("hasMockLocationsEnabled", hasMockLocationsEnabled);
         json.put("locationProvider", locationProvider);
         json.put("sdk", Build.VERSION.SDK_INT);
         json.put("jelly", Build.VERSION_CODES.JELLY_BEAN_MR2);
