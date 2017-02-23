@@ -10,6 +10,8 @@ import android.support.v4.util.TimeUtils;
 import org.json.JSONObject;
 import org.json.JSONException;
 
+import com.tenforwardconsulting.cordova.BackgroundGeolocationPlugin;
+
 public class BackgroundLocation implements Parcelable {
     private Long locationId = null;
     private Integer locationProvider = null;
@@ -59,9 +61,7 @@ public class BackgroundLocation implements Parcelable {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             isFromMockProvider = location.isFromMockProvider();
         } 
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            hasMockLocationsEnabled = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ALLOW_MOCK_LOCATION).equals("1");   
-        }
+        hasMockLocationsEnabled = BackgroundGeolocationPlugin.hasMockLocationsEnabled;   
     }
 
     /**
