@@ -110,8 +110,7 @@ public class BackgroundLocation implements Parcelable {
         hasSpeed = l.hasSpeed;
         hasBearing = l.hasBearing;
         hasRadius = l.hasRadius;
-        
-        MockProvider = l.isFromMockProvider;
+        isFromMockProvider = l.isFromMockProvider;
         isValid = l.isValid;
         extras = (l.extras == null) ? null : new Bundle(l.extras);
     }
