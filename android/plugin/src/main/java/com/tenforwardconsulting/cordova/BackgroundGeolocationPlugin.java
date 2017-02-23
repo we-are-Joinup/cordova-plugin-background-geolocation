@@ -89,7 +89,7 @@ public class BackgroundGeolocationPlugin extends CordovaPlugin {
     public static final int PERMISSION_DENIED_ERROR_CODE = 2;
     public static final String[] permissions = { Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION };
     
-    public static hasMockLocationsEnabled = false;
+    public static Boolean hasMockLocationsEnabled = false;
     
         /** Messenger for communicating with the service. */
     private Messenger mService = null;
