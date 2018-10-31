@@ -9,6 +9,14 @@ This is a new class
 
 package com.marianhello.bgloc;
 
+
+// New imports
+import android.app.NotificationManager;
+import java.util.List;
+import android.app.NotificationChannel;
+import android.annotation.TargetApi;
+// End New imports
+
 import android.accounts.Account;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -205,6 +213,30 @@ public class LocationService extends Service {
         super.onTaskRemoved(rootIntent);
     }
 
+    public String getChannelID(Context context, NotificationManager mNotificationManager) {
+        String packageName = context.getPackageName();
+        return packageName + "default_channel_background_geolocation";
+    }
+
+
+    @TargetApi(26)
+    private void createNotificationChannel(String channelID) {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = channelID;
+            String description = channelID;
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel(channelID, name, importance);
+            channel.setDescription(description);
+            channel.setSound(null, null);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         log.info("Received start startId: {} intent: {}", startId, intent);
@@ -237,7 +269,17 @@ public class LocationService extends Service {
 
         if (config.getStartForeground()) {
             // Build a Notification required for running service in foreground.
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+            Context context = getApplicationContext();
+
+            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            String channelID = this.getChannelID(context, mNotificationManager);
+            this.createNotificationChannel(channelID);
+            NotificationCompat.Builder builder = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                builder = new NotificationCompat.Builder(this, channelID);
+            } else {
+                builder = new NotificationCompat.Builder(this);
+            }
             builder.setContentTitle(config.getNotificationTitle());
             builder.setContentText(config.getNotificationText());
             if (config.getSmallNotificationIcon() != null) {
@@ -253,7 +295,6 @@ public class LocationService extends Service {
             }
 
             // Add an onclick handler to the notification
-            Context context = getApplicationContext();
             String packageName = context.getPackageName();
             Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
             launchIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
