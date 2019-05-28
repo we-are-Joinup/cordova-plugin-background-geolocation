@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.os.IBinder;
 
 public class AuthenticatorService extends Service {
-    public static final String ACCOUNT_NAME = "dummy";
+    public static final String ACCOUNT_NAME = "Background Geolocation";
 
     private Authenticator mAuthenticator;
 
