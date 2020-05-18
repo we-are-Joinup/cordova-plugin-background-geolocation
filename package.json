@@ -1,9 +1,11 @@
 {
-  "name": "cordova-plugin-mauron85-background-geolocation",
-  "version": "2.2.5",
+  "name": "@mauron85/cordova-plugin-background-geolocation",
+  "version": "3.1.0",
   "description": "Cordova Background Geolocation Plugin",
+  "main": "./www/BackgroundGeolocation.js",
+  "types": "./www/BackgroundGeolocation.d.ts",
   "cordova": {
-    "id": "cordova-plugin-mauron85-background-geolocation",
+    "id": "@mauron85/cordova-plugin-background-geolocation",
     "platforms": [
       "android",
       "ios"
@@ -24,12 +26,18 @@
     "cordova",
     "phonegap"
   ],
-  "engines": [
-    {
-      "name": "cordova",
-      "version": ">=3.0.0"
+  "engines": {
+    "cordovaDependencies": {
+      "0.0.1": {
+        "cordova": ">=3.0.0"
+      },
+      "2.3.3": {
+        "cordova-ios": ">=4.4.0",
+        "cordova-android": ">=6.3.0",
+        "cordova": ">=7.1.0"
+      }
     }
-  ],
+  },
   "author": "",
   "license": "Apache-2.0",
   "bugs": {

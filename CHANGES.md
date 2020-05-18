@@ -1,5 +1,254 @@
 ## Changelog
 
+### [3.1.0] - 2019-09-24
+### Fixed
+- fix package scope
+- Android fix RejectedExecutionException
+- Android add stop guard
+
+### Changed
+- adopt headless task changes in common module
+
+### [3.0.7] - 2019-09-17
+### Fixed
+- Android Foreground service permission is required since Android 28 - @IsraelHikingMap
+
+### [3.0.6] - 2019-08-27
+### Fixed
+- Android allow to start service from background on API >=26
+
+### [3.0.5] - 2019-08-13
+### Fixed
+- Android fix tone generator crash
+- Fixed XML config to use to install plugin (PR #575) - @globules-io
+- Fixed typo in README - @diegogurpegui
+
+Many thanks to all contributors
+
+### [3.0.1] - 2019-03-28
+### Added
+- iOS implement config.stopOnTerminate using startMonitoringSignificantLocationChanges
+
+### Fixed
+- Android fix don't start service on app visibility change events
+fixes: #552, #551
+
+### [3.0.0] - 2019-03-25
+### Fixed
+- Android fix don't start service on configure
+fixes: #552, #551
+
+### [3.0.0-alpha.XY] - unreleased
+#### Added
+- checkStatus if service is running
+- events [start, stop, authorization, background, foreground]
+- implement all methods for both platforms
+- new RAW_LOCATION_PROVIDER
+
+Since alpha.8:
+- onError event signature = { code, message }
+- post/sync attributes customization via postTemplate config prop
+- enable partial plugin reconfiguration
+- Android on "activity" event
+- iOS configuration persistence
+
+Since alpha.12:
+- iOS ACTIVITY_PROVIDER (experimental)
+
+Since alpha.15:
+- checkStatus returns status of location services (locationServicesEnabled)
+- iOS RAW_LOCATION_PROVIDER continue to run on app terminate
+
+Since alpha.19:
+- Android Headless Task
+
+Since alpha.20:
+- Android location parameters isFromMockProvider and mockLocationsEnabled
+
+Since alpha.24:
+- Android Oreo support
+
+Since alpha.25:
+- method forceSync
+- option to get logs by offset and filter by log level
+- log uncaught exceptions
+
+Since alpha.30:
+- method getCurrentLocation
+
+Since alpha.41:
+- notificationsEnabled config option (by [@danielgindi](https://github.com/danielgindi/))
+More info: https://github.com/mauron85/react-native-background-geolocation/pull/269
+- Allow stopping location updates on status "285 Updates Not Required" (by [@danielgindi](https://github.com/danielgindi/))
+More info: https://github.com/mauron85/react-native-background-geolocation/pull/271
+
+Since alpha.45:
+- Listen for 401 Unauthorized status codes received from http server (by [@FeNoMeNa](https://github.com/FeNoMeNa/))
+More info: https://github.com/mauron85/react-native-background-geolocation/pull/308/files
+
+Since alpha.46:
+- typescript definitions
+
+Since alpha.47:
+- allow nested location props in postTemplate
+
+#### Changed
+- start and stop methods doesn't accept callback (use event listeners instead)
+- for background syncing syncUrl option is required
+- on Android DISTANCE_FILTER_PROVIDER now accept arbitrary values (before only 10, 100, 1000)
+- all plugin constants are in directly BackgroundGeolocation namespace. (check index.js)
+- plugin can be started without executing configure (stored settings or defaults will be used)
+- location property locationId renamed to just id
+- iOS pauseLocationUpdates now default to false (becuase iOS docs now states that you need to restart manually if you set it to true)
+- iOS finish method replaced with startTask and endTask
+
+Since alpha.8:
+- Android bind to service on facade construct
+
+Since alpha.14:
+- iOS saveBatteryOnBackground defaults to false
+
+Since alpha.15:
+- shared code base with react-native
+
+Since alpha.25:
+- Android common error format
+- Android remove sync delay when conditions are met
+- Android consider HTTP 201 response code as succesful post
+- Android obey system sync setting
+
+Since alpha.28:
+- Android remove wake locks
+https://github.com/mauron85/background-geolocation-android/pull/4 by @grassick
+
+Since alpha.29:
+- Android show service notification only when in background
+- Android remove config option startForeground (related to above)
+
+Since alpha.32:
+- Android bring back startForeground config option (BREAKING CHANGE!)
+
+startForeground has slightly different meaning.
+
+If false (default) then service will create notification and promotes
+itself to foreground service, when client unbinds from service.
+This typically happens when application is moving to background.
+If app is moving back to foreground (becoming visible to user)
+service destroys notification and also stop being foreground service.
+
+If true service will create notification and will stay in foreground at all times.
+
+Since alpha.33:
+- Android internal changes (permission handling)
+
+Since alpha.40:
+- Android disable notification sound and vibration on oreo
+(PR: [#9](https://github.com/mauron85/background-geolocation-android/pull/9)
+by [@danielgindi](https://github.com/danielgindi/))
+
+Since alpha.48:
+- removeAllListeners - remove all event listeners when calling without parameter
+
+Since alpha.50:
+- export BackgroundGeolocationPlugin interface for ionic users (fixes #515)
+
+### Fixed
+
+Since alpha.13:
+- iOS open location settings on iOS 10 and later (PR #158) by @asafron
+
+Since alpha.15:
+- checkStatus authorization
+- Android fix for #362 Build Failed: cannot find symbol (PR #378)
+
+Since alpha.18:
+- Android fix #276 - NullPointerException: onTaskRemoved
+- Android fix #380 - allow to override android support library
+
+Since alpha.19:
+- Android fix event listeners not triggering after app is restarted and service was running
+
+Since alpha.23:
+- iOS fix #394 - App Store Rejection - Prefs Non-Public URL Scheme
+- iOS reset connectivity status on stop
+
+Since alpha.24:
+- Android fix service accidently started with default or stored config
+
+Since alpha.25:
+- Android add guards to prevent some race conditions
+- Android config null handling
+
+Since alpha.31:
+- iOS fix error message format
+- iOS fix missing getLogEntries arguments
+
+Since alpha.32:
+- iOS display debug notifications in foreground on iOS >= 10
+- iOS missing activity provider stationary event
+- Android getCurrentLocation request permission prompt
+
+Since alpha.35:
+- Android fix issue #431 - "dependencies.gradle" not found
+
+Since alpha.38:
+- iOS Fix crash on delete all location ([7392e39](https://github.com/mauron85/background-geolocation-ios/commit/7392e391c3de3ff0d6f5ef2ef19c34aba612bf9b) by [@acerbetti](https://github.com/acerbetti/))
+
+Since alpha.39:
+- Android Defer start and configure until service is ready
+(PR: [#7](https://github.com/mauron85/background-geolocation-android/pull/7)
+Commit: [00e1314](https://github.com/mauron85/background-geolocation-android/commit/00e131478ad4e37576eb85581bb663b65302a4e0) by [@danielgindi](https://github.com/danielgindi/),
+fixes #201, #181, #172)
+
+Since alpha.40:
+- iOS Avoid taking control of UNUserNotificationCenter
+(PR: [#268](https://github.com/mauron85/react-native-background-geolocation/pull/268))
+
+Since alpha.42:
+- Android fix locationService treating success as errors
+(PR: [#13](https://github.com/mauron85/background-geolocation-android/pull/13)
+by [@hoisel](https://github.com/hoisel/))
+
+Since alpha.43:
+- Android make sure mService exists when we call start or stop
+(PR: [#17](https://github.com/mauron85/background-geolocation-android/pull/17)
+by [@ivosabev](https://github.com/ivosabev/))
+
+Since alpha.46:
+- Android fix service crash on boot for Android 8 when startOnBoot option is used
+
+Since alpha.48:
+- fix typescript definitions (fixes #514)
+- Android prefix resource strings to prevent collision with other plugins
+
+Since alpha.49:
+- Android fix App Crashes when entering / leaving Background
+- Android fix crash on permission when started from background
+
+### [2.3.6] - 2018-09-11
+### Fixed
+- Android remove non public URL
+
+### [2.3.5] - 2018-03-29
+### Fixed
+- Android fix #384
+
+### [2.3.3] - 2017-11-17
+### Added
+- Android allow override google play services version
+
+### [2.3.2] - 2017-11-06
+### Fix
+- iOS support for iOS 11 (#PR 330)
+
+### [2.3.1] - 2017-10-31
+### Fix
+- iOS httpHeaders values are not sent with syncUrl on iOS PR #325
+
+### [2.3.0] - 2017-10-31
+### Added
+- Android Make account name configurable PR #334 by unixmonkey
+
 ### [2.2.5] - 2016-11-13
 ### Fixed
 - Android fixing issue #195 PR204

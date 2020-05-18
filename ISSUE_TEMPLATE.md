@@ -1,11 +1,16 @@
+<!-- PLEASE DON'T DELETE THIS TEMPLATE, OR YOUR ISSUE WILL BE CLOSED/IGNORED !!! -->
+
 <!--- Provide a general summary of the issue in the Title above -->
 
 ## Your Environment
 <!--- Include as many relevant details about the environment you experienced the bug in -->
+<!--- Please specify exact version numbers and don't use terms like "latest", as such reference to numeric version changes over the time -->
 * Plugin version:
 * Platform: iOS or Android
 * OS version:
 * Device manufacturer and model:
+<!--- If Simulator was used instead of real device, type Yes in following section -->
+* Running in Simulator:
 * Cordova version (`cordova -v`):
 * Cordova platform version (`cordova platform ls`):
 * Plugin configuration options: 

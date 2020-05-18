@@ -1,2 +1,3 @@
-include ':plugin'
+include ':common'
+include ':CDVBackgroundGeolocation'
 include ':CordovaLib'
