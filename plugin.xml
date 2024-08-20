@@ -160,6 +160,7 @@
                 android:enabled="true"
                 android:exported="false"
                 android:name="com.marianhello.bgloc.service.LocationServiceImpl"
+                android:foregroundServiceType="location"
                 />
             <receiver
                   android:name="com.marianhello.bgloc.BootCompletedReceiver"
