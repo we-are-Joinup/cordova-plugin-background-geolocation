@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mauron85/cordova-plugin-background-geolocation.git"
+    "url": "git+https://github.com/we-are-Joinup/cordova-plugin-background-geolocation.git"
   },
   "keywords": [
     "gps",
