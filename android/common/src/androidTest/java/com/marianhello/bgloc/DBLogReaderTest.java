@@ -20,30 +20,26 @@ import org.slf4j.event.Level;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import android.content.Context;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.CoreConstants;
-import ch.qos.logback.core.android.CommonPathUtil;
+import ch.qos.logback.core.android.AndroidContextUtil;
+import android.content.ContextWrapper;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class DBLogReaderTest {
     private static final String TAG = "DBLogReaderTest";
+    private Context mContext;
 
     @Before
     public void deleteDatabase() {
         LoggerManager.disableDBLogging();
-        String packageName = null;
-        LoggerContext context = (LoggerContext) org.slf4j.LoggerFactory.getILoggerFactory();
-
-        if (context != null) {
-            packageName = context.getProperty(CoreConstants.PACKAGE_NAME_KEY);
-        }
-
-        if (!(packageName == null || packageName.length() == 0)) {
-            File dbfile = new File(CommonPathUtil.getDatabaseDirectoryPath(packageName), DBLogReader.DB_FILENAME);
-            Context ctx = InstrumentationRegistry.getTargetContext();
-            ctx.deleteDatabase(dbfile.getPath());
+        mContext = InstrumentationRegistry.getTargetContext();
+        ContextWrapper contextWrapper = new ContextWrapper(mContext);
+        AndroidContextUtil contextUtil = new AndroidContextUtil(contextWrapper);
+        String dbPath = contextUtil.getDatabasePath(DBLogReader.DB_FILENAME);
+        if (dbPath != null && !dbPath.isEmpty()) {
+            new File(dbPath).delete();
         }
     }
 
@@ -56,7 +52,7 @@ public class DBLogReaderTest {
             logger.debug("Message #" + i);
         }
 
-        DBLogReader logReader = new DBLogReader();
+        DBLogReader logReader = new DBLogReader(mContext);
         Collection<LogEntry> entries = logReader.getEntries(10, 0, Level.DEBUG);
         Assert.assertEquals(10, entries.size());
     }
@@ -70,7 +66,7 @@ public class DBLogReaderTest {
             logger.debug("Message #" + i);
         }
 
-        DBLogReader logReader = new DBLogReader();
+        DBLogReader logReader = new DBLogReader(mContext);
         ArrayList<LogEntry> entries = (ArrayList) logReader.getEntries(10, 0, Level.DEBUG);
         LogEntry lastEntry = entries.get(entries.size() - 1);
         entries = (ArrayList) logReader.getEntries(10, lastEntry.getId(), Level.DEBUG);
@@ -86,7 +82,7 @@ public class DBLogReaderTest {
             logger.debug("Message #" + i);
         }
 
-        DBLogReader logReader = new DBLogReader();
+        DBLogReader logReader = new DBLogReader(mContext);
         ArrayList<LogEntry> entries = (ArrayList) logReader.getEntries(10, 0, Level.DEBUG);
         LogEntry lastEntry = entries.get(entries.size() - 1);
         entries = (ArrayList) logReader.getEntries(-10, lastEntry.getId(), Level.DEBUG);

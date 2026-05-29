@@ -382,12 +382,12 @@ public class BackgroundGeolocationFacade {
     }
 
     public Collection<LogEntry> getLogEntries(int limit) {
-        DBLogReader logReader = new DBLogReader();
+        DBLogReader logReader = new DBLogReader(mContext);
         return logReader.getEntries(limit, 0, Level.DEBUG);
     }
 
     public Collection<LogEntry> getLogEntries(int limit, int offset, String minLevel) {
-        DBLogReader logReader = new DBLogReader();
+        DBLogReader logReader = new DBLogReader(mContext);
         return logReader.getEntries(limit, offset, Level.valueOf(minLevel));
     }
 
