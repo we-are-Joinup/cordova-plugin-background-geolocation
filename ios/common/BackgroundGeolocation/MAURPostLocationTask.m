@@ -113,7 +113,7 @@ static MAURLocationTransform s_locationTransform = nil;
 
 - (BOOL) post:(MAURLocation*)location toUrl:(NSString*)url withTemplate:(id)locationTemplate withHttpHeaders:(NSMutableDictionary*)httpHeaders error:(NSError * __autoreleasing *)outError;
 {
-    NSArray *locations = [[NSArray alloc] initWithObjects:[location toResultFromTemplate:locationTemplate], nil];
+    NSDictionary *locations = [location toResultFromTemplate:locationTemplate];
     //    NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData: data options: NSJSONReadingMutableContainers error: &e];
     NSData *data = [NSJSONSerialization dataWithJSONObject:locations options:0 error:outError];
     if (!data) {

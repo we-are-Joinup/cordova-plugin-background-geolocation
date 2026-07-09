@@ -147,6 +147,8 @@ function onDeviceReady() {
     postTemplate: {
       lat: '@latitude',
       lon: '@longitude',
+      time: '@time',
+      timeISO: '@timeISO',
       foo: 'bar' // you can also add your own properties
     }
   });
@@ -580,6 +582,8 @@ BackgroundGeolocation.configure({
   postTemplate: {
     lat: '@latitude',
     lon: '@longitude',
+    time: '@time',
+    timeISO: '@timeISO',
     foo: 'bar' // you can also add your own properties
   }
 });
@@ -592,7 +596,7 @@ BackgroundGeolocation.configure({
 });
 ```
 
-Note: Keep in mind that all locations (even a single one) will be sent as an array of object(s), when postTemplate is `jsonObject` and array of array(s) for `jsonArray`!
+(changed )Note: Single one will be sent as `jsonObject` and array of array(s) for `jsonArray`, but not multiples. 
 
 ### Android Headless Task (Experimental)
 
