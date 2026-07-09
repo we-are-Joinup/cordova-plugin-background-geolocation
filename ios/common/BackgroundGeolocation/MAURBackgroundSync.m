@@ -54,7 +54,7 @@
     }
 }
 
-- (void) sync:(NSString * _Nonnull)url withTemplate:(id)locationTemplate withHttpHeaders:(NSMutableDictionary * _Nullable)httpHeaders
+- (void) sync:(NSString * _Nonnull)url withTemplate:(id)locationTemplate withHttpHeaders:(NSMutableDictionary * _Nullable)httpHeaders withHttpMethod:(NSString * _Nullable)httpMethod
 {
     MAURSQLiteLocationDAO* locationDAO = [MAURSQLiteLocationDAO sharedInstance];
     NSArray *locations = [locationDAO getLocationsForSync];
@@ -77,7 +77,7 @@
     uint64_t bytesTotalForThisFile = [[[NSFileManager defaultManager] attributesOfItemAtPath:jsonUrl.path error:nil] fileSize];
     
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
-    [request setHTTPMethod:@"POST"];
+    [request setHTTPMethod:(httpMethod != nil ? httpMethod : @"POST")];
     [request setValue:[NSString stringWithFormat:@"%llu", bytesTotalForThisFile] forHTTPHeaderField:@"Content-Length"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     

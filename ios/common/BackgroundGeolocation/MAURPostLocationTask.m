@@ -124,7 +124,7 @@ static MAURLocationTransform s_locationTransform = nil;
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:url]];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-    [request setHTTPMethod:@"POST"];
+    [request setHTTPMethod:[self.config decodeHttpMethod]];
     if (httpHeaders != nil) {
         for(id key in httpHeaders) {
             id value = [httpHeaders objectForKey:key];
@@ -181,7 +181,7 @@ static MAURLocationTransform s_locationTransform = nil;
 - (void) sync
 {
     if ([self.config hasValidSyncUrl]) {
-        [uploader sync:self.config.syncUrl withTemplate:self.config._template withHttpHeaders:self.config.httpHeaders];
+        [uploader sync:self.config.syncUrl withTemplate:self.config._template withHttpHeaders:self.config.httpHeaders withHttpMethod:[self.config decodeHttpMethod]];
     }
 }
 

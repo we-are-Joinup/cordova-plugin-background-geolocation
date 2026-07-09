@@ -38,6 +38,7 @@
 #define CC_COLUMN_NAME_MAX_LOCATIONS          "max_locations"
 #define CC_COLUMN_NAME_PAUSE_LOCATION_UPDATES "pause_updates"
 #define CC_COLUMN_NAME_TEMPLATE               "template"
+#define CC_COLUMN_NAME_HTTP_METHOD            "http_method"
 #define CC_COLUMN_NAME_LAST_UPDATED_AT        "updated_at"
 
 @interface MAURConfigurationContract : NSObject

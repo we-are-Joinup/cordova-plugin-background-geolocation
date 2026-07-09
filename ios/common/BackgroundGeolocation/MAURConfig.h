@@ -29,6 +29,7 @@ enum {
 @property NSString *url;
 @property NSString *syncUrl;
 @property NSNumber *syncThreshold;
+@property NSString *httpMethod;
 @property NSMutableDictionary* httpHeaders;
 @property NSNumber *_saveBatteryOnBackground;
 @property NSNumber *maxLocations;
@@ -52,6 +53,7 @@ enum {
 - (BOOL) hasSyncUrl;
 - (BOOL) hasValidSyncUrl;
 - (BOOL) hasSyncThreshold;
+- (BOOL) hasHttpMethod;
 - (BOOL) hasHttpHeaders;
 - (BOOL) hasSaveBatteryOnBackground;
 - (BOOL) hasMaxLocations;
@@ -65,6 +67,7 @@ enum {
 - (BOOL) pauseLocationUpdates;
 - (CLActivityType) decodeActivityType;
 - (NSInteger) decodeDesiredAccuracy;
+- (NSString*) decodeHttpMethod;
 - (NSString*) getHttpHeadersAsString:(NSError * __autoreleasing *)outError;
 - (NSString*) getTemplateAsString:(NSError * __autoreleasing *)outError;
 - (NSDictionary*) toDictionary;

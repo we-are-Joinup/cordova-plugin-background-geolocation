@@ -86,8 +86,9 @@
         @COMMA_SEP @CC_COLUMN_NAME_MAX_LOCATIONS
         @COMMA_SEP @CC_COLUMN_NAME_PAUSE_LOCATION_UPDATES
         @COMMA_SEP @CC_COLUMN_NAME_TEMPLATE
+        @COMMA_SEP @CC_COLUMN_NAME_HTTP_METHOD
         @COMMA_SEP @CC_COLUMN_NAME_LAST_UPDATED_AT
-        @") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,DateTime('now'))";
+        @") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,DateTime('now'))";
 
     [queue inDatabase:^(FMDatabase *database) {
         success = [database executeUpdate:sql,
@@ -117,7 +118,8 @@
                     [config hasSaveBatteryOnBackground] ? config._saveBatteryOnBackground : @CC_COLUMN_NAME_NULLABLE,
                     [config hasMaxLocations] ? config.maxLocations : @CC_COLUMN_NAME_NULLABLE,
                     [config hasPauseLocationUpdates] ? config._pauseLocationUpdates : @CC_COLUMN_NAME_NULLABLE,
-                    (templateString != nil) ? templateString : @CC_COLUMN_NAME_NULLABLE
+                    (templateString != nil) ? templateString : @CC_COLUMN_NAME_NULLABLE,
+                    [config hasHttpMethod] ? config.httpMethod : @CC_COLUMN_NAME_NULLABLE
                 ];
 
         if (success) {
@@ -162,6 +164,7 @@
     @COMMA_SEP @CC_COLUMN_NAME_MAX_LOCATIONS
     @COMMA_SEP @CC_COLUMN_NAME_PAUSE_LOCATION_UPDATES
     @COMMA_SEP @CC_COLUMN_NAME_TEMPLATE
+    @COMMA_SEP @CC_COLUMN_NAME_HTTP_METHOD
     @" FROM " @CC_TABLE_NAME @" WHERE " @CC_COLUMN_NAME_ID @" = 1";
     
     [queue inDatabase:^(FMDatabase *database) {
@@ -223,6 +226,9 @@
                     NSData *jsonTemplate = [templateAsString dataUsingEncoding:NSUTF8StringEncoding];
                     config._template = [NSJSONSerialization JSONObjectWithData:jsonTemplate options:0 error:nil];
                 }
+            }
+            if ([self isNonNull:rs columnIndex:27]) {
+                config.httpMethod = [rs stringForColumnIndex:27];
             }
         }
         
