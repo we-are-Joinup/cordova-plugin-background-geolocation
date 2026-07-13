@@ -637,4 +637,12 @@ FMDBLogger *sqliteLogger;
     }
 }
 
+- (void) postLocationTask:(MAURPostLocationTask *)task didReceiveHttpResponse:(NSDictionary *)response
+{
+    if (_delegate && [_delegate respondsToSelector:@selector(onHttpResponse:)])
+    {
+        [_delegate onHttpResponse:response];
+    }
+}
+
 @end

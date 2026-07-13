@@ -135,8 +135,8 @@ static MAURLocationTransform s_locationTransform = nil;
     
     // Create url connection and fire request
     NSHTTPURLResponse* urlResponse = nil;
-    [NSURLConnection sendSynchronousRequest:request returningResponse:&urlResponse error:outError];
-    
+    NSData *responseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&urlResponse error:outError];
+
     NSInteger statusCode = urlResponse.statusCode;
     
     if (statusCode == 285)
@@ -166,6 +166,21 @@ static MAURLocationTransform s_locationTransform = nil;
     // All 2xx statuses are okay
     if (statusCode >= 200 && statusCode < 300)
     {
+        NSString *responseBody = responseData != nil
+            ? [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding]
+            : nil;
+        NSDictionary *response = @{
+            @"status": @(statusCode),
+            @"body": responseBody != nil ? responseBody : @"",
+            @"location": [location toDictionary]
+        };
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (_delegate && [_delegate respondsToSelector:@selector(postLocationTask:didReceiveHttpResponse:)])
+            {
+                [_delegate postLocationTask:self didReceiveHttpResponse:response];
+            }
+        });
+
         return YES;
     }
     

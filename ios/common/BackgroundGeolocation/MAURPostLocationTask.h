@@ -19,6 +19,7 @@
 @optional
 - (void)postLocationTaskRequestedAbortUpdates:(MAURPostLocationTask * _Nonnull)task;
 - (void)postLocationTaskHttpAuthorizationUpdates:(MAURPostLocationTask * _Nonnull)task;
+- (void)postLocationTask:(MAURPostLocationTask * _Nonnull)task didReceiveHttpResponse:(NSDictionary * _Nonnull)response;
 
 @end
 

@@ -218,6 +218,15 @@ function onDeviceReady() {
     console.log('[INFO] App needs to authorize the http requests');
   });
 
+  BackgroundGeolocation.on('http_response', function(response) {
+    // iOS only: fired after each position was successfully posted to `url`
+    console.log('[INFO] Server responded with status ' + response.status);
+
+    // response.body is the raw response body (string), parse it if your server returns JSON
+    var payload = response.body ? JSON.parse(response.body) : null;
+    // response.location is the position that was posted
+  });
+
   BackgroundGeolocation.checkStatus(function(status) {
     console.log('[INFO] BackgroundGeolocation service is running', status.isRunning);
     console.log('[INFO] BackgroundGeolocation services enabled', status.locationServicesEnabled);
@@ -504,6 +513,7 @@ Unregister all event listeners for given event. If parameter `event` is not prov
 | `background`        |                        | Android      | all         | app entered background state                     |
 | `abort_requested`   |                        | all          | all         | server responded with "285 Updates Not Required" |
 | `http_authorization`|                        | all          | all         | server responded with "401 Unauthorized"         |
+| `http_response`     | `HttpResponse`         | iOS          | all         | server response of a position posted to `url`    |
 
 ### Location event
 | Location parameter     | Type      | Description                                                            |
@@ -525,6 +535,23 @@ Locations parameters `isFromMockProvider` and `mockLocationsEnabled` are not pos
 Both can be requested via option `postTemplate`.
 
 Note: Do not use location `id` as unique key in your database as ids will be reused when `option.maxLocations` is reached.
+
+### HTTP response event (iOS only)
+
+Fired after each position was successfully posted to `url` (HTTP status 2xx), so the app can process what the server replied.
+
+| HttpResponse parameter | Type       | Description                                                        |
+|------------------------|------------|--------------------------------------------------------------------|
+| `status`               | `Number`   | HTTP status code of the response (2xx)                             |
+| `body`                 | `String`   | raw response body; parse it yourself when the server returns JSON  |
+| `location`             | `Location` | the position that was posted                                       |
+
+Notes:
+* only fired for per-location posts to `url`; `syncUrl` batch uploads do not emit it
+  (they run on a background `NSURLSession` and may complete when the app is not running).
+* failed posts (non 2xx, network error) do not emit it; those positions stay
+  queued and are re-sent by the `syncUrl` mechanism.
+* the event is delivered to the webview only while the app is running.
 
 ### Activity event
 | Activity parameter | Type      | Description                                                            |
