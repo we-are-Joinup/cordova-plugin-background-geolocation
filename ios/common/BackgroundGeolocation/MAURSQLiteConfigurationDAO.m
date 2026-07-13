@@ -108,8 +108,8 @@
                     [NSNull null], // unsupported startForeground
                     [NSNull null], // unsupported stopOnStillActivity
                     [config hasLocationProvider] ? config.locationProvider : @CC_COLUMN_NAME_NULLABLE,
-                    [NSNull null], // unsupported interval
-                    [NSNull null], // unsupported fastestInterval
+                    [config hasInterval] ? config.interval : @CC_COLUMN_NAME_NULLABLE,
+                    [config hasFastestInterval] ? config.fastestInterval : @CC_COLUMN_NAME_NULLABLE,
                     [config hasActivitiesInterval] ? config.activitiesInterval : @CC_COLUMN_NAME_NULLABLE,
                     [config hasUrl] ? config.url : @CC_COLUMN_NAME_NULLABLE,
                     [config hasSyncUrl] ? config.syncUrl : @CC_COLUMN_NAME_NULLABLE,
@@ -191,6 +191,12 @@
             }
             if ([self isNonNull:rs columnIndex:15]) {
                 config.locationProvider = [NSNumber numberWithInt:[rs intForColumnIndex:15]];
+            }
+            if ([self isNonNull:rs columnIndex:16]) {
+                config.interval = [NSNumber numberWithInt:[rs intForColumnIndex:16]];
+            }
+            if ([self isNonNull:rs columnIndex:17]) {
+                config.fastestInterval = [NSNumber numberWithInt:[rs intForColumnIndex:17]];
             }
             if ([self isNonNull:rs columnIndex:18]) {
                 config.activitiesInterval = [NSNumber numberWithInt:[rs intForColumnIndex:18]];

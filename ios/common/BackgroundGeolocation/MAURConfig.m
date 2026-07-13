@@ -12,7 +12,7 @@
 
 @implementation MAURConfig 
 
-@synthesize stationaryRadius, distanceFilter, desiredAccuracy, _debug, activityType, activitiesInterval, _stopOnTerminate, url, syncUrl, syncThreshold, httpMethod, httpHeaders, _saveBatteryOnBackground, maxLocations, _pauseLocationUpdates, locationProvider, _template;
+@synthesize stationaryRadius, distanceFilter, desiredAccuracy, _debug, activityType, activitiesInterval, interval, fastestInterval, _stopOnTerminate, url, syncUrl, syncThreshold, httpMethod, httpHeaders, _saveBatteryOnBackground, maxLocations, _pauseLocationUpdates, locationProvider, _template;
 
 -(instancetype) initWithDefaults {
     self = [super init];
@@ -59,6 +59,12 @@
     }
     if (isNull(config[@"activitiesInterval"])) {
         instance.activitiesInterval = config[@"activitiesInterval"];
+    }
+    if (isNotNull(config[@"interval"])) {
+        instance.interval = config[@"interval"];
+    }
+    if (isNotNull(config[@"fastestInterval"])) {
+        instance.fastestInterval = config[@"fastestInterval"];
     }
     if (isNotNull(config[@"stopOnTerminate"])) {
         instance._stopOnTerminate = config[@"stopOnTerminate"];
@@ -127,6 +133,12 @@
     if ([newConfig hasActivitiesInterval]) {
         merger.activitiesInterval = newConfig.activitiesInterval;
     }
+    if ([newConfig hasInterval]) {
+        merger.interval = newConfig.interval;
+    }
+    if ([newConfig hasFastestInterval]) {
+        merger.fastestInterval = newConfig.fastestInterval;
+    }
     if ([newConfig hasStopOnTerminate]) {
         merger._stopOnTerminate = newConfig._stopOnTerminate;
     }
@@ -174,6 +186,8 @@
         copy._debug = _debug;
         copy.activityType = activityType;
         copy.activitiesInterval = activitiesInterval;
+        copy.interval = interval;
+        copy.fastestInterval = fastestInterval;
         copy._stopOnTerminate = _stopOnTerminate;
         copy.url = url;
         copy.syncUrl = syncUrl;
@@ -218,6 +232,16 @@
 - (BOOL) hasActivitiesInterval
 {
     return activitiesInterval != nil;
+}
+
+- (BOOL) hasInterval
+{
+    return interval != nil;
+}
+
+- (BOOL) hasFastestInterval
+{
+    return fastestInterval != nil;
 }
 
 - (BOOL) hasStopOnTerminate
@@ -486,6 +510,8 @@
  
     if ([self hasActivityType]) [dict setObject:self.activityType forKey:@"activityType"];
     if ([self hasActivitiesInterval]) [dict setObject:self.activitiesInterval forKey:@"activitiesInterval"];
+    if ([self hasInterval]) [dict setObject:self.interval forKey:@"interval"];
+    if ([self hasFastestInterval]) [dict setObject:self.fastestInterval forKey:@"fastestInterval"];
     if ([self hasUrl]) [dict setObject:self.url forKey:@"url"];
     if ([self hasSyncUrl]) [dict setObject:self.syncUrl forKey:@"syncUrl"];
     if ([self hasHttpHeaders]) [dict setObject:self.httpHeaders forKey:@"httpHeaders"];

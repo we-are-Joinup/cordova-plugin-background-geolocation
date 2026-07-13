@@ -25,6 +25,8 @@ enum {
 @property NSNumber *_debug;
 @property NSString *activityType;
 @property NSNumber *activitiesInterval;
+@property NSNumber *interval;
+@property NSNumber *fastestInterval;
 @property NSNumber *_stopOnTerminate;
 @property NSString *url;
 @property NSString *syncUrl;
@@ -61,6 +63,8 @@ enum {
 - (BOOL) hasLocationProvider;
 - (BOOL) hasTemplate;
 - (BOOL) hasActivitiesInterval;
+- (BOOL) hasInterval;
+- (BOOL) hasFastestInterval;
 - (BOOL) isDebugging;
 - (BOOL) stopOnTerminate;
 - (BOOL) saveBatteryOnBackground;

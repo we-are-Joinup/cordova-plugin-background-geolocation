@@ -25,7 +25,10 @@ static NSString * const Domain = @"com.marianhello";
 
 enum {
     maxLocationWaitTimeInSeconds = 15,
-    maxLocationAgeInSeconds = 30
+    maxLocationAgeInSeconds = 30,
+    // defaults when config.interval / config.fastestInterval are not set
+    defaultResendIntervalInSeconds = 90,
+    defaultResendFallbackInSeconds = 60
 };
 
 @interface MAURDistanceFilterLocationProvider () <CLLocationManagerDelegate>
@@ -42,7 +45,13 @@ enum {
 
     MAUROperationalMode operationMode;
     NSDate *aquireStartTime;
-    
+
+    NSDate *lastLocationAt;   // last CoreLocation delivery (GPS alive)
+    NSDate *lastEmittedAt;    // last position actually sent to the delegate
+    NSDate *kickedAt;
+    MAURLocation *lastReportedLocation;
+    NSTimer *watchdogTimer;
+
     CLLocationManager *locationManager;
 
     // configurable options
@@ -138,8 +147,123 @@ enum {
     [self switchMode:MAURForegroundMode];
 
     isStarted = YES;
+    [self startWatchdog];
 
     return YES;
+}
+
+/**
+ * In-process watchdog: CoreLocation can silently stop delivering updates
+ * after some time in background (observed on iOS 26 after ~12min), and delivers
+ * nothing while stationary under a distance filter. A repeating timer keeps a
+ * heartbeat in the log and enforces a position cadence, driven by config:
+ * - interval (ms, default 60s): when no position was sent for this long,
+ *   force a fresh fix even while stationary;
+ * - fastestInterval (ms, default 30s): when the forced fix does not arrive
+ *   within this window (e.g. no GPS signal), re-send the previous position.
+ */
+- (NSTimeInterval) resendIntervalInSeconds
+{
+    if ([_config hasInterval]) {
+        return MAX(_config.interval.doubleValue / 1000.0, 10);
+    }
+    return defaultResendIntervalInSeconds;
+}
+
+- (NSTimeInterval) resendFallbackInSeconds
+{
+    if ([_config hasFastestInterval]) {
+        return MAX(_config.fastestInterval.doubleValue / 1000.0, 5);
+    }
+    return defaultResendFallbackInSeconds;
+}
+
+/**
+ * minimum time between positions sent to the delegate (fastestInterval).
+ * Without it, a watchdog kick (distanceFilter=None until the regular filter
+ * is restored) or fast distance-filter crossings emit several positions
+ * within seconds.
+ */
+- (NSTimeInterval) minSecondsBetweenUpdates
+{
+    if ([_config hasFastestInterval]) {
+        return MAX(_config.fastestInterval.doubleValue / 1000.0, 5);
+    }
+    // small default that only suppresses bursts
+    return 5;
+}
+
+- (void) startWatchdog
+{
+    [self stopWatchdog];
+    lastLocationAt = [NSDate date];
+    lastEmittedAt = nil; // first fix after start is never throttled
+    kickedAt = nil;
+
+    NSTimeInterval tick = MIN([self resendIntervalInSeconds], [self resendFallbackInSeconds]) / 2;
+    tick = MAX(MIN(tick, 30), 5);
+    watchdogTimer = [NSTimer scheduledTimerWithTimeInterval:tick
+                                                     target:self
+                                                   selector:@selector(onWatchdogTick:)
+                                                   userInfo:nil
+                                                    repeats:YES];
+}
+
+- (void) stopWatchdog
+{
+    if (watchdogTimer != nil) {
+        [watchdogTimer invalidate];
+        watchdogTimer = nil;
+    }
+}
+
+- (void) onWatchdogTick:(NSTimer*)timer
+{
+    if (!isStarted || !isUpdatingLocation) {
+        return;
+    }
+
+    NSTimeInterval sinceLastLocation = lastLocationAt != nil ? -[lastLocationAt timeIntervalSinceNow] : -1;
+    // cadence is measured against what was actually sent; before anything
+    // was emitted, fall back to the last delivery/start time
+    NSDate *sentRef = lastEmittedAt != nil ? lastEmittedAt : lastLocationAt;
+    NSTimeInterval sinceLastSent = sentRef != nil ? -[sentRef timeIntervalSinceNow] : -1;
+    UIApplicationState appState = [UIApplication sharedApplication].applicationState;
+    DDLogDebug(@"%@ watchdog: appState=%ld secondsSinceLastFix=%.0f secondsSinceLastSent=%.0f kickPending=%d",
+               TAG, (long)appState, sinceLastLocation, sinceLastSent, kickedAt != nil);
+
+    if (kickedAt == nil) {
+        if (sinceLastSent > [self resendIntervalInSeconds]) {
+            DDLogInfo(@"%@ watchdog: no position sent for %.0fs, forcing a fresh fix", TAG, sinceLastSent);
+            [locationManager stopUpdatingLocation];
+            // force a delivery even while stationary; the configured filter is
+            // restored by the regular distance-filter logic on the next fix
+            locationManager.distanceFilter = kCLDistanceFilterNone;
+            [locationManager startUpdatingLocation];
+            kickedAt = [NSDate date];
+        }
+        return;
+    }
+
+    if (-[kickedAt timeIntervalSinceNow] > [self resendFallbackInSeconds]) {
+        // no fresh fix arrived after the kick; re-send previous known position
+        kickedAt = nil;
+        lastEmittedAt = [NSDate date];
+
+        if (lastReportedLocation == nil) {
+            DDLogWarn(@"%@ watchdog: no fix after kick and no previous position to re-send", TAG);
+            return;
+        }
+
+        DDLogInfo(@"%@ watchdog: no fix after kick, re-sending previous position", TAG);
+        if ([_config isDebugging]) {
+            [self notify:@"Watchdog: re-sending previous position"];
+        }
+
+        MAURLocation *heartbeat = [lastReportedLocation copy];
+        heartbeat.time = [NSDate date];
+        [super.delegate onLocationChanged:heartbeat];
+    }
 }
 
 /**
@@ -148,7 +272,8 @@ enum {
 - (BOOL) onStop:(NSError * __autoreleasing *)outError
 {
     DDLogInfo(@"%@ stop", TAG);
-    
+
+    [self stopWatchdog];
     [self stopUpdatingLocation];
     [self stopMonitoringSignificantLocationChanges];
     [self stopMonitoringForRegion];
@@ -184,7 +309,10 @@ enum {
     }
     
     aquireStartTime = [NSDate date];
-    
+    lastLocationAt = [NSDate date];
+    lastEmittedAt = nil; // position after a mode switch is never throttled
+    kickedAt = nil;
+
     // Crank up the GPS power temporarily to get a good fix on our current location
     [self stopUpdatingLocation];
     locationManager.distanceFilter = kCLDistanceFilterNone;
@@ -195,6 +323,9 @@ enum {
 - (void) locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
     DDLogDebug(@"%@ didUpdateLocations (operationMode: %lu)", TAG, (unsigned long)operationMode);
+
+    lastLocationAt = [NSDate date];
+    kickedAt = nil;
     
     MAUROperationalMode actAsInMode = operationMode;
     
@@ -261,6 +392,8 @@ enum {
         stationaryLocation.radius = _config.stationaryRadius;
         stationaryLocation.time = stationarySince;
         [self startMonitoringStationaryRegion:stationaryLocation];
+        lastReportedLocation = stationaryLocation;
+        lastEmittedAt = [NSDate date];
         // fire onStationary @event for Javascript.
         [super.delegate onStationaryChanged:stationaryLocation];
     } else if (isAcquiringSpeed) {
@@ -300,6 +433,17 @@ enum {
         [self switchMode:operationMode];
     }
     
+    // always remember the freshest fix, even when its emission is throttled,
+    // so watchdog re-sends carry the newest known position
+    lastReportedLocation = bestLocation;
+
+    NSTimeInterval sinceLastEmitted = lastEmittedAt != nil ? -[lastEmittedAt timeIntervalSinceNow] : DBL_MAX;
+    if (sinceLastEmitted < [self minSecondsBetweenUpdates]) {
+        DDLogDebug(@"%@ update skipped, only %.0fs since previous one (fastestInterval)", TAG, sinceLastEmitted);
+        return;
+    }
+
+    lastEmittedAt = [NSDate date];
     [super.delegate onLocationChanged:bestLocation];
 }
 
