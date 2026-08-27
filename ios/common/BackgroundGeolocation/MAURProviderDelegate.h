@@ -47,6 +47,10 @@ typedef NS_ENUM(NSInteger, MAUROperationalMode) {
 - (void) onHttpAuthorization;
 - (void) onError:(NSError*)error;
 
+@optional
+// server response of a natively posted position (url config)
+- (void) onHttpResponse:(NSDictionary * _Nonnull)response;
+
 @end
 
 #endif /* MAURProviderDelegate_h */

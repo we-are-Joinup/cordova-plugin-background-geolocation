@@ -13,6 +13,7 @@
 #import <UIKit/UIKit.h>
 #import <CoreLocation/CoreLocation.h>
 #import <AudioToolbox/AudioToolbox.h>
+#import <UserNotifications/UserNotifications.h>
 #import "MAURBackgroundGeolocationFacade.h"
 #import "MAURPostLocationTask.h"
 #import "MAURSQLiteConfigurationDAO.h"
@@ -22,6 +23,7 @@
 #import "FMDBLogger.h"
 #import "MAURLogReader.h"
 #import "MAURLocationManager.h"
+#import "MAURLocationSessionManager.h"
 #import "MAURActivityLocationProvider.h"
 #import "MAURDistanceFilterLocationProvider.h"
 #import "MAURRawLocationProvider.h"
@@ -51,9 +53,7 @@ FMDBLogger *sqliteLogger;
 @implementation MAURBackgroundGeolocationFacade {
     BOOL isStarted;
     MAUROperationalMode operationMode;
-    
-    UILocalNotification *localNotification;
-    
+
     // configurable options
     MAURConfig *_config;
     
@@ -89,9 +89,6 @@ FMDBLogger *sqliteLogger;
     postLocationTask = [[MAURPostLocationTask alloc] init];
     postLocationTask.delegate = self;
     
-    localNotification = [[UILocalNotification alloc] init];
-    localNotification.timeZone = [NSTimeZone defaultTimeZone];
-    
     isStarted = NO;
     
     return self;
@@ -116,18 +113,13 @@ FMDBLogger *sqliteLogger;
     MAURSQLiteConfigurationDAO* configDAO = [MAURSQLiteConfigurationDAO sharedInstance];
     [configDAO persistConfiguration:_config];
     
-    // ios 8 requires permissions to send local-notifications
+    // permission is required to send debug local-notifications
     if ([_config isDebugging]) {
-        [self runOnMainThread:^{
-            UIApplication *app = [UIApplication sharedApplication];
-            if ([[UIApplication sharedApplication]respondsToSelector:@selector(currentUserNotificationSettings)]) {
-                UIUserNotificationType wantedTypes = UIUserNotificationTypeBadge|UIUserNotificationTypeSound|UIUserNotificationTypeAlert;
-                UIUserNotificationSettings *currentSettings = [app currentUserNotificationSettings];
-                if (!currentSettings || (currentSettings.types != wantedTypes)) {
-                    if ([app respondsToSelector:@selector(registerUserNotificationSettings:)]) {
-                        [app registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:wantedTypes categories:nil]];
-                    }
-                }
+        UNAuthorizationOptions wantedOptions = UNAuthorizationOptionBadge|UNAuthorizationOptionSound|UNAuthorizationOptionAlert;
+        [[UNUserNotificationCenter currentNotificationCenter] requestAuthorizationWithOptions:wantedOptions
+                                                                            completionHandler:^(BOOL granted, NSError * _Nullable error) {
+            if (error != nil) {
+                DDLogWarn(@"%@ notification authorization error: %@", TAG, error);
             }
         }];
     }
@@ -205,9 +197,15 @@ FMDBLogger *sqliteLogger;
         
         isStarted = [locationProvider onStart:&error];
         locationProvider.delegate = self;
+
+        if (isStarted) {
+            // keeps background location updates alive on iOS 17+
+            // (must be [re]created while in foreground or right after background launch)
+            [[MAURLocationSessionManager sharedInstance] startSession];
+        }
     }];
-    
-    
+
+
     if (!isStarted) {
         if (outError != nil) {
             *outError = error;
@@ -231,11 +229,15 @@ FMDBLogger *sqliteLogger;
     }
     
     [postLocationTask stop];
-    
+
     [self runOnMainThread:^{
         isStarted = ![locationProvider onStop:outError];
+
+        if (!isStarted) {
+            [[MAURLocationSessionManager sharedInstance] stopSession];
+        }
     }];
-    
+
     return isStarted;
 }
 
@@ -270,7 +272,11 @@ FMDBLogger *sqliteLogger;
 
 - (MAURLocationAuthorizationStatus) authorizationStatus
 {
-    CLAuthorizationStatus authStatus = [CLLocationManager authorizationStatus];
+    __block CLAuthorizationStatus authStatus;
+    // CLLocationManager should be created on a thread with an active run loop
+    [self runOnMainThread:^{
+        authStatus = [[MAURLocationManager sharedInstance] clAuthorizationStatus];
+    }];
     switch (authStatus) {
         case kCLAuthorizationStatusNotDetermined:
             return MAURLocationAuthorizationNotDetermined;
@@ -319,9 +325,9 @@ FMDBLogger *sqliteLogger;
 - (void) showAppSettings
 {
     [self runOnMainThread:^{
-        BOOL canGoToSettings = (UIApplicationOpenSettingsURLString != NULL);
-        if (canGoToSettings) {
-            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
+        NSURL *settingsUrl = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
+        if (settingsUrl != nil) {
+            [[UIApplication sharedApplication] openURL:settingsUrl options:@{} completionHandler:nil];
         }
     }];
 }
@@ -456,9 +462,14 @@ FMDBLogger *sqliteLogger;
 
 - (void) notify:(NSString*)message
 {
-    localNotification.fireDate = [NSDate date];
-    localNotification.alertBody = message;
-    [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+    UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+    content.body = message;
+    content.sound = [UNNotificationSound defaultSound];
+
+    UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:[[NSUUID UUID] UUIDString]
+                                                                           content:content
+                                                                           trigger:nil]; // deliver immediately
+    [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:nil];
 }
 
 -(void) runOnMainThread:(dispatch_block_t)completionHandle {
@@ -623,6 +634,14 @@ FMDBLogger *sqliteLogger;
     if (_delegate && [_delegate respondsToSelector:@selector(onHttpAuthorization)])
     {
         [_delegate onHttpAuthorization];
+    }
+}
+
+- (void) postLocationTask:(MAURPostLocationTask *)task didReceiveHttpResponse:(NSDictionary *)response
+{
+    if (_delegate && [_delegate respondsToSelector:@selector(onHttpResponse:)])
+    {
+        [_delegate onHttpResponse:response];
     }
 }
 

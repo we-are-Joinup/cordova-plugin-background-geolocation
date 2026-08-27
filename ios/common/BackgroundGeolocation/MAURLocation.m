@@ -25,6 +25,13 @@ MAURLocation* _location;
 - (id) mapValue:(id)value
 {
     if ([value isKindOfClass:[NSString class]]) {
+        if ([value isEqualToString:@"@timeISO"]) {
+            NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+            formatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ssZZZZZ";
+            formatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+            formatter.timeZone = [NSTimeZone localTimeZone];
+            return [formatter stringFromDate:_location.time];
+        }
         id locationValue = [_location getValueForKey:value];
         return locationValue != nil ? locationValue : value;
     } else if ([value isKindOfClass:[NSDictionary class]]) {

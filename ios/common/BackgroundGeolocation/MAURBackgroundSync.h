@@ -26,7 +26,7 @@
 
 - (instancetype) init;
 - (NSString*) status;
-- (void) sync:(NSString * _Nonnull)url withTemplate:(id)locationTemplate withHttpHeaders:(NSMutableDictionary * _Nullable)httpHeaders;
+- (void) sync:(NSString * _Nonnull)url withTemplate:(id)locationTemplate withHttpHeaders:(NSMutableDictionary * _Nullable)httpHeaders withHttpMethod:(NSString * _Nullable)httpMethod;
 - (void) cancel;
 
 @end

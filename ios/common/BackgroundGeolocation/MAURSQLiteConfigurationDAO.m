@@ -86,8 +86,9 @@
         @COMMA_SEP @CC_COLUMN_NAME_MAX_LOCATIONS
         @COMMA_SEP @CC_COLUMN_NAME_PAUSE_LOCATION_UPDATES
         @COMMA_SEP @CC_COLUMN_NAME_TEMPLATE
+        @COMMA_SEP @CC_COLUMN_NAME_HTTP_METHOD
         @COMMA_SEP @CC_COLUMN_NAME_LAST_UPDATED_AT
-        @") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,DateTime('now'))";
+        @") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,DateTime('now'))";
 
     [queue inDatabase:^(FMDatabase *database) {
         success = [database executeUpdate:sql,
@@ -107,8 +108,8 @@
                     [NSNull null], // unsupported startForeground
                     [NSNull null], // unsupported stopOnStillActivity
                     [config hasLocationProvider] ? config.locationProvider : @CC_COLUMN_NAME_NULLABLE,
-                    [NSNull null], // unsupported interval
-                    [NSNull null], // unsupported fastestInterval
+                    [config hasInterval] ? config.interval : @CC_COLUMN_NAME_NULLABLE,
+                    [config hasFastestInterval] ? config.fastestInterval : @CC_COLUMN_NAME_NULLABLE,
                     [config hasActivitiesInterval] ? config.activitiesInterval : @CC_COLUMN_NAME_NULLABLE,
                     [config hasUrl] ? config.url : @CC_COLUMN_NAME_NULLABLE,
                     [config hasSyncUrl] ? config.syncUrl : @CC_COLUMN_NAME_NULLABLE,
@@ -117,7 +118,8 @@
                     [config hasSaveBatteryOnBackground] ? config._saveBatteryOnBackground : @CC_COLUMN_NAME_NULLABLE,
                     [config hasMaxLocations] ? config.maxLocations : @CC_COLUMN_NAME_NULLABLE,
                     [config hasPauseLocationUpdates] ? config._pauseLocationUpdates : @CC_COLUMN_NAME_NULLABLE,
-                    (templateString != nil) ? templateString : @CC_COLUMN_NAME_NULLABLE
+                    (templateString != nil) ? templateString : @CC_COLUMN_NAME_NULLABLE,
+                    [config hasHttpMethod] ? config.httpMethod : @CC_COLUMN_NAME_NULLABLE
                 ];
 
         if (success) {
@@ -162,6 +164,7 @@
     @COMMA_SEP @CC_COLUMN_NAME_MAX_LOCATIONS
     @COMMA_SEP @CC_COLUMN_NAME_PAUSE_LOCATION_UPDATES
     @COMMA_SEP @CC_COLUMN_NAME_TEMPLATE
+    @COMMA_SEP @CC_COLUMN_NAME_HTTP_METHOD
     @" FROM " @CC_TABLE_NAME @" WHERE " @CC_COLUMN_NAME_ID @" = 1";
     
     [queue inDatabase:^(FMDatabase *database) {
@@ -188,6 +191,12 @@
             }
             if ([self isNonNull:rs columnIndex:15]) {
                 config.locationProvider = [NSNumber numberWithInt:[rs intForColumnIndex:15]];
+            }
+            if ([self isNonNull:rs columnIndex:16]) {
+                config.interval = [NSNumber numberWithInt:[rs intForColumnIndex:16]];
+            }
+            if ([self isNonNull:rs columnIndex:17]) {
+                config.fastestInterval = [NSNumber numberWithInt:[rs intForColumnIndex:17]];
             }
             if ([self isNonNull:rs columnIndex:18]) {
                 config.activitiesInterval = [NSNumber numberWithInt:[rs intForColumnIndex:18]];
@@ -223,6 +232,9 @@
                     NSData *jsonTemplate = [templateAsString dataUsingEncoding:NSUTF8StringEncoding];
                     config._template = [NSJSONSerialization JSONObjectWithData:jsonTemplate options:0 error:nil];
                 }
+            }
+            if ([self isNonNull:rs columnIndex:27]) {
+                config.httpMethod = [rs stringForColumnIndex:27];
             }
         }
         

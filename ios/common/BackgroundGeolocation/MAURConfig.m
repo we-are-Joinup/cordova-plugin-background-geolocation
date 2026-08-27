@@ -12,7 +12,7 @@
 
 @implementation MAURConfig 
 
-@synthesize stationaryRadius, distanceFilter, desiredAccuracy, _debug, activityType, activitiesInterval, _stopOnTerminate, url, syncUrl, syncThreshold, httpHeaders, _saveBatteryOnBackground, maxLocations, _pauseLocationUpdates, locationProvider, _template;
+@synthesize stationaryRadius, distanceFilter, desiredAccuracy, _debug, activityType, activitiesInterval, interval, fastestInterval, _stopOnTerminate, url, syncUrl, syncThreshold, httpMethod, httpHeaders, _saveBatteryOnBackground, maxLocations, _pauseLocationUpdates, locationProvider, _template;
 
 -(instancetype) initWithDefaults {
     self = [super init];
@@ -60,6 +60,12 @@
     if (isNull(config[@"activitiesInterval"])) {
         instance.activitiesInterval = config[@"activitiesInterval"];
     }
+    if (isNotNull(config[@"interval"])) {
+        instance.interval = config[@"interval"];
+    }
+    if (isNotNull(config[@"fastestInterval"])) {
+        instance.fastestInterval = config[@"fastestInterval"];
+    }
     if (isNotNull(config[@"stopOnTerminate"])) {
         instance._stopOnTerminate = config[@"stopOnTerminate"];
     }
@@ -71,6 +77,9 @@
     }
     if (isNotNull(config[@"syncThreshold"])) {
         instance.syncThreshold = config[@"syncThreshold"];
+    }
+    if (isNotNull(config[@"httpMethod"])) {
+        instance.httpMethod = config[@"httpMethod"];
     }
     if (config[@"httpHeaders"] != nil) {
         instance.httpHeaders = config[@"httpHeaders"];
@@ -124,6 +133,12 @@
     if ([newConfig hasActivitiesInterval]) {
         merger.activitiesInterval = newConfig.activitiesInterval;
     }
+    if ([newConfig hasInterval]) {
+        merger.interval = newConfig.interval;
+    }
+    if ([newConfig hasFastestInterval]) {
+        merger.fastestInterval = newConfig.fastestInterval;
+    }
     if ([newConfig hasStopOnTerminate]) {
         merger._stopOnTerminate = newConfig._stopOnTerminate;
     }
@@ -135,6 +150,9 @@
     }
     if ([newConfig hasSyncThreshold]) {
         merger.syncThreshold = newConfig.syncThreshold;
+    }
+    if ([newConfig hasHttpMethod]) {
+        merger.httpMethod = newConfig.httpMethod;
     }
     if ([newConfig hasHttpHeaders]) {
         merger.httpHeaders = newConfig.httpHeaders;
@@ -168,10 +186,13 @@
         copy._debug = _debug;
         copy.activityType = activityType;
         copy.activitiesInterval = activitiesInterval;
+        copy.interval = interval;
+        copy.fastestInterval = fastestInterval;
         copy._stopOnTerminate = _stopOnTerminate;
         copy.url = url;
         copy.syncUrl = syncUrl;
         copy.syncThreshold = syncThreshold;
+        copy.httpMethod = httpMethod;
         copy.httpHeaders = httpHeaders;
         copy._saveBatteryOnBackground = _saveBatteryOnBackground;
         copy.maxLocations = maxLocations;
@@ -211,6 +232,16 @@
 - (BOOL) hasActivitiesInterval
 {
     return activitiesInterval != nil;
+}
+
+- (BOOL) hasInterval
+{
+    return interval != nil;
+}
+
+- (BOOL) hasFastestInterval
+{
+    return fastestInterval != nil;
 }
 
 - (BOOL) hasStopOnTerminate
@@ -275,6 +306,11 @@
 - (BOOL) hasSyncThreshold
 {
     return syncThreshold != nil;
+}
+
+- (BOOL) hasHttpMethod
+{
+    return httpMethod != nil && httpMethod.length > 0;
 }
 
 - (BOOL) hasHttpHeaders
@@ -395,6 +431,22 @@
     return kCLLocationAccuracyHundredMeters;
 }
 
+- (NSString*) decodeHttpMethod
+{
+    if (![self hasHttpMethod]) {
+        return @"POST";
+    }
+
+    NSString *method = [httpMethod uppercaseString];
+    NSArray *allowed = @[@"POST", @"PUT", @"PATCH"];
+    if ([allowed containsObject:method]) {
+        return method;
+    }
+
+    NSLog(@"Unsupported httpMethod: %@, falling back to POST", httpMethod);
+    return @"POST";
+}
+
 + (NSDictionary*) getDefaultTemplate
 {
     return @{
@@ -458,6 +510,8 @@
  
     if ([self hasActivityType]) [dict setObject:self.activityType forKey:@"activityType"];
     if ([self hasActivitiesInterval]) [dict setObject:self.activitiesInterval forKey:@"activitiesInterval"];
+    if ([self hasInterval]) [dict setObject:self.interval forKey:@"interval"];
+    if ([self hasFastestInterval]) [dict setObject:self.fastestInterval forKey:@"fastestInterval"];
     if ([self hasUrl]) [dict setObject:self.url forKey:@"url"];
     if ([self hasSyncUrl]) [dict setObject:self.syncUrl forKey:@"syncUrl"];
     if ([self hasHttpHeaders]) [dict setObject:self.httpHeaders forKey:@"httpHeaders"];
@@ -467,6 +521,7 @@
     if ([self hasDebug]) [dict setObject:self._debug forKey:@"debug"];
     if ([self hasStopOnTerminate]) [dict setObject:self._stopOnTerminate forKey:@"stopOnTerminate"];
     if ([self hasSyncThreshold]) [dict setObject:self.syncThreshold forKey:@"syncThreshold"];
+    if ([self hasHttpMethod]) [dict setObject:self.httpMethod forKey:@"httpMethod"];
     if ([self hasSaveBatteryOnBackground]) [dict setObject:self._saveBatteryOnBackground forKey:@"saveBatteryOnBackground"];
     if ([self hasMaxLocations]) [dict setObject:self.maxLocations forKey:@"maxLocations"];
     if ([self hasPauseLocationUpdates]) [dict setObject:self._pauseLocationUpdates forKey:@"pauseLocationUpdates"];
@@ -478,7 +533,7 @@
 
 - (NSString *) description
 {
-    return [NSString stringWithFormat:@"Config: distanceFilter=%@ stationaryRadius=%@ desiredAccuracy=%@ activityType=%@ activitiesInterval=%@ isDebugging=%@ stopOnTerminate=%@ url=%@ syncThreshold=%@ maxLocations=%@ httpHeaders=%@ pauseLocationUpdates=%@ saveBatteryOnBackground=%@ locationProvider=%@ postTemplate=%@", self.distanceFilter, self.stationaryRadius, self.desiredAccuracy, self.activityType, self.activitiesInterval, self._debug, self._stopOnTerminate, self.url, self.syncThreshold, self.maxLocations, self.httpHeaders, self._pauseLocationUpdates, self._saveBatteryOnBackground, self.locationProvider, self._template];
+    return [NSString stringWithFormat:@"Config: distanceFilter=%@ stationaryRadius=%@ desiredAccuracy=%@ activityType=%@ activitiesInterval=%@ isDebugging=%@ stopOnTerminate=%@ url=%@ syncThreshold=%@ httpMethod=%@ maxLocations=%@ httpHeaders=%@ pauseLocationUpdates=%@ saveBatteryOnBackground=%@ locationProvider=%@ postTemplate=%@", self.distanceFilter, self.stationaryRadius, self.desiredAccuracy, self.activityType, self.activitiesInterval, self._debug, self._stopOnTerminate, self.url, self.syncThreshold, self.httpMethod, self.maxLocations, self.httpHeaders, self._pauseLocationUpdates, self._saveBatteryOnBackground, self.locationProvider, self._template];
 
 }
 

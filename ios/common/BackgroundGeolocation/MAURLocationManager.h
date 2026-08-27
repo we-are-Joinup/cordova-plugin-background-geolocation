@@ -29,6 +29,7 @@
 @property (nonatomic, strong) CLLocationManager* locationManager;
 @property (nonatomic, weak) id  delegate;
 
+- (CLAuthorizationStatus) clAuthorizationStatus;
 - (BOOL) start:(NSError * __autoreleasing *)outError;
 - (BOOL) stop:(NSError * __autoreleasing *)outError;
 - (BOOL) startMonitoringSignificantLocationChanges;

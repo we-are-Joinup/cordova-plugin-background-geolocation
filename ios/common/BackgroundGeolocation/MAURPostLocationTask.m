@@ -113,7 +113,7 @@ static MAURLocationTransform s_locationTransform = nil;
 
 - (BOOL) post:(MAURLocation*)location toUrl:(NSString*)url withTemplate:(id)locationTemplate withHttpHeaders:(NSMutableDictionary*)httpHeaders error:(NSError * __autoreleasing *)outError;
 {
-    NSArray *locations = [[NSArray alloc] initWithObjects:[location toResultFromTemplate:locationTemplate], nil];
+    NSDictionary *locations = [location toResultFromTemplate:locationTemplate];
     //    NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData: data options: NSJSONReadingMutableContainers error: &e];
     NSData *data = [NSJSONSerialization dataWithJSONObject:locations options:0 error:outError];
     if (!data) {
@@ -124,7 +124,7 @@ static MAURLocationTransform s_locationTransform = nil;
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:url]];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-    [request setHTTPMethod:@"POST"];
+    [request setHTTPMethod:[self.config decodeHttpMethod]];
     if (httpHeaders != nil) {
         for(id key in httpHeaders) {
             id value = [httpHeaders objectForKey:key];
@@ -135,8 +135,8 @@ static MAURLocationTransform s_locationTransform = nil;
     
     // Create url connection and fire request
     NSHTTPURLResponse* urlResponse = nil;
-    [NSURLConnection sendSynchronousRequest:request returningResponse:&urlResponse error:outError];
-    
+    NSData *responseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&urlResponse error:outError];
+
     NSInteger statusCode = urlResponse.statusCode;
     
     if (statusCode == 285)
@@ -166,6 +166,21 @@ static MAURLocationTransform s_locationTransform = nil;
     // All 2xx statuses are okay
     if (statusCode >= 200 && statusCode < 300)
     {
+        NSString *responseBody = responseData != nil
+            ? [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding]
+            : nil;
+        NSDictionary *response = @{
+            @"status": @(statusCode),
+            @"body": responseBody != nil ? responseBody : @"",
+            @"location": [location toDictionary]
+        };
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (_delegate && [_delegate respondsToSelector:@selector(postLocationTask:didReceiveHttpResponse:)])
+            {
+                [_delegate postLocationTask:self didReceiveHttpResponse:response];
+            }
+        });
+
         return YES;
     }
     
@@ -181,7 +196,7 @@ static MAURLocationTransform s_locationTransform = nil;
 - (void) sync
 {
     if ([self.config hasValidSyncUrl]) {
-        [uploader sync:self.config.syncUrl withTemplate:self.config._template withHttpHeaders:self.config.httpHeaders];
+        [uploader sync:self.config.syncUrl withTemplate:self.config._template withHttpHeaders:self.config.httpHeaders withHttpMethod:[self.config decodeHttpMethod]];
     }
 }
 

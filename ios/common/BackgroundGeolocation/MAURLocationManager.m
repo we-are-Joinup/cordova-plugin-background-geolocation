@@ -30,62 +30,59 @@ static NSString *const Domain = @"com.marianhello";
     self = [super init];
     if (self != nil) {
         locationManager = [[CLLocationManager alloc] init];
-
-        if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"9.0")) {
-            locationManager.allowsBackgroundLocationUpdates = YES;
-        }
-
+        locationManager.allowsBackgroundLocationUpdates = YES;
+        // required for reliable background sessions of When-In-Use authorized apps
+        locationManager.showsBackgroundLocationIndicator = YES;
         locationManager.delegate = self;
         locationManager.desiredAccuracy = kCLLocationAccuracyBest;
     }
     return self;
 }
 
+- (CLAuthorizationStatus) clAuthorizationStatus
+{
+    return locationManager.authorizationStatus;
+}
+
 - (BOOL) start:(NSError * __autoreleasing *)outError
 {
     NSAssert([NSThread isMainThread], @"%@ %@", TAG, @"should only be called from the main thread.");
 
-    NSUInteger authStatus;
-    
-    if ([CLLocationManager respondsToSelector:@selector(authorizationStatus)]) { // iOS 4.2+
-        authStatus = [CLLocationManager authorizationStatus];
-        
-        if (authStatus == kCLAuthorizationStatusDenied) {
-            if (outError != NULL) {
-                NSDictionary *errorDictionary = @{
-                                                  NSLocalizedDescriptionKey: NSLocalizedString(@LOCATION_DENIED, nil)
-                                                  };
+    CLAuthorizationStatus authStatus = [self clAuthorizationStatus];
 
-                *outError = [NSError errorWithDomain:Domain code:MAURBGPermissionDenied userInfo:errorDictionary];
-            }
-            
-            return NO;
+    if (authStatus == kCLAuthorizationStatusDenied) {
+        if (outError != NULL) {
+            NSDictionary *errorDictionary = @{
+                                              NSLocalizedDescriptionKey: NSLocalizedString(@LOCATION_DENIED, nil)
+                                              };
+
+            *outError = [NSError errorWithDomain:Domain code:MAURBGPermissionDenied userInfo:errorDictionary];
         }
-        
-        if (authStatus == kCLAuthorizationStatusRestricted) {
-            if (outError != NULL) {
-                NSDictionary *errorDictionary = @{
-                                                  NSLocalizedDescriptionKey: NSLocalizedString(@LOCATION_RESTRICTED, nil)
-                                                  };
-                *outError = [NSError errorWithDomain:Domain code:MAURBGPermissionDenied userInfo:errorDictionary];
-            }
-            
-            return NO;
-        }
-        
-#ifdef __IPHONE_8_0
-        // we do startUpdatingLocation even though we might not get permissions granted
-        // we can stop later on when recieved callback on user denial
-        // it's neccessary to start call startUpdatingLocation in iOS < 8.0 to show user prompt!
-        
-        if (authStatus == kCLAuthorizationStatusNotDetermined) {
-            if ([locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {  //iOS 8.0+
-                [locationManager requestAlwaysAuthorization];
-            }
-        }
-#endif
+
+        return NO;
     }
-    
+
+    if (authStatus == kCLAuthorizationStatusRestricted) {
+        if (outError != NULL) {
+            NSDictionary *errorDictionary = @{
+                                              NSLocalizedDescriptionKey: NSLocalizedString(@LOCATION_RESTRICTED, nil)
+                                              };
+            *outError = [NSError errorWithDomain:Domain code:MAURBGPermissionDenied userInfo:errorDictionary];
+        }
+
+        return NO;
+    }
+
+    // we do startUpdatingLocation even though we might not get permissions granted
+    // we can stop later on when recieved callback on user denial
+    if (authStatus == kCLAuthorizationStatusNotDetermined) {
+        [locationManager requestAlwaysAuthorization];
+    } else if (authStatus == kCLAuthorizationStatusAuthorizedWhenInUse) {
+        // ask user to upgrade to Always, so tracking survives app suspension.
+        // The system shows this prompt at most once, subsequent calls are no-ops.
+        [locationManager requestAlwaysAuthorization];
+    }
+
     [locationManager startUpdatingLocation];
     return YES;
 }
@@ -213,7 +210,12 @@ static NSString *const Domain = @"com.marianhello";
     }
 }
 
-- (void) locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+- (void) locationManagerDidChangeAuthorization:(CLLocationManager *)manager
+{
+    [self handleAuthorizationStatusChange:manager.authorizationStatus];
+}
+
+- (void) handleAuthorizationStatusChange:(CLAuthorizationStatus)status
 {
     MAURLocationAuthorizationStatus authStatus;
     

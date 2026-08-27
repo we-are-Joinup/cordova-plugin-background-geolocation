@@ -250,8 +250,10 @@
                 <param name="ios-package" value="CDVBackgroundGeolocation" />
                 <param name="onload" value="true" />
             </feature>
+            <preference name="deployment-target" value="16.0" />
         </config-file>
         <framework src="CoreLocation.framework" />
+        <framework src="UserNotifications.framework" />
         <framework src="SystemConfiguration.framework" />
         <framework src="AudioToolbox.framework" weak="true" />
         <framework src="AVFoundation.framework" weak="true" />
@@ -301,6 +303,8 @@
         <source-file src="ios/common/BackgroundGeolocation/MAURLocationContract.m" />
         <header-file src="ios/common/BackgroundGeolocation/MAURLocationManager.h" />
         <source-file src="ios/common/BackgroundGeolocation/MAURLocationManager.m" />
+        <header-file src="ios/common/BackgroundGeolocation/MAURLocationSessionManager.h" />
+        <source-file src="ios/common/BackgroundGeolocation/MAURLocationSessionManager.m" />
         <header-file src="ios/common/BackgroundGeolocation/MAURLogReader.h" />
         <source-file src="ios/common/BackgroundGeolocation/MAURLogReader.m" />
         <header-file src="ios/common/BackgroundGeolocation/MAURLogging.h" />
