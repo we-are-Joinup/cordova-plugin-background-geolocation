@@ -55,13 +55,18 @@ static NSInteger const kDatabaseVersion = 4;
          @"DROP TABLE IF EXISTS " @LC_TABLE_NAME
     ] componentsJoinedByString:@";"];
 
+    __block BOOL dropped = NO;
     [queue inDatabase:^(FMDatabase *database) {
-        if (![database executeStatements:sql]) {
+        dropped = [database executeStatements:sql];
+        if (!dropped) {
             NSLog(@"Db downgrade failed code: %d: message: %@", [database lastErrorCode], [database lastErrorMessage]);
-        } else {
-            [self onCreate:queue];
         }
     }];
+
+    if (dropped) {
+        // NOTE: must run outside the inDatabase block above, onCreate opens its own FMDatabaseQueue
+        [self onCreate:queue];
+    }
 }
 
 - (void) onUpgrade:(FMDatabaseQueue*)queue fromVersion:(NSInteger)oldVersion toVersion:(NSInteger)newVersion
